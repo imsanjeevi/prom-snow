@@ -191,9 +191,9 @@ async def process_alert(alert: Alert, unique_str: str):
     except Exception as e:
         print("Error processing alert:", e)
 
-# if __name__ == "__main__":
-#     import os
-#     from dotenv import load_dotenv
-#     load_dotenv()
-#     import uvicorn
-#     uvicorn.run(app, host="0.0.0.0", port=8090, reload=True)
+if __name__ == "__main__":
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    import uvicorn
+    uvicorn.run("app/main:app", host="0.0.0.0", port=8090, reload=True)

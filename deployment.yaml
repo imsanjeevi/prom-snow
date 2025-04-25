@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prom-snow-alerting
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prom-snow-alerting
+  template:
+    metadata:
+      labels:
+        app: prom-snow-alerting
+    spec:
+      containers:
+        - name: prom-snow-container
+          image: msanjeevi/prom-snow-webhook
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: prom-snow-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prom-snow-service
+spec:
+  selector:
+    app: prom-snow-alerting
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: prom-snow-route
+spec:
+  to:
+    kind: Service
+    name: prom-snow-service
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
