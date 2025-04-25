@@ -1,1 +1,7 @@
 app/node_modules/
+
+# python
+.env
+.venv
+__pycache__
+.DS_Store

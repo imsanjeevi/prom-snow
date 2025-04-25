@@ -271,3 +271,11 @@ Any labels set on the prometheus alerts are passed onto the webhook body, simila
 
 #### Recovery from failed state if any 
 I rely on the OpenShift liveness probe which works well for this example and it's less complex. In your production code you may want to add more error handling
+
+
+## Python version
+```sh
+# cp .env.example .env
+pip install -r requirements.txt
+python run webhook.py
+```
