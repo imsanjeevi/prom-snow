@@ -1,0 +1,9 @@
+__pycache__
+.venv
+.env
+.env.example
+.gitignore
+.gitleaks.toml
+Dockerfile
+Containerfile
+README.md
