@@ -5,8 +5,17 @@ import httpx
 from typing import List, Dict, Any
 from pydantic import BaseModel
 from fastapi import FastAPI, Path, Body, Depends, HTTPException, status
+from dotenv import load_dotenv
+load_dotenv()
+
+print("PWD", os.getcwd())
+# Load external mandatory fields
+with open("app/config/mandatory.json", 'r') as f:
+    mandatory_fields = json.load(f)
 
 class AlertLabel(BaseModel):
+    class Config:
+        extra = "allow"
     alertname: str
     namespace: str
     description: str = ""
@@ -16,6 +25,8 @@ class AlertLabel(BaseModel):
 
 
 class Alert(BaseModel):
+    class Config:
+        extra = "allow"
     status: str
     labels: AlertLabel
     fingerprint: str
@@ -27,6 +38,9 @@ class AlertPayload(BaseModel):
 TOKEN = "" # will be replaced by itsm_login
 
 app = FastAPI()
+
+proxy = os.getenv("HTTP_PROXY", None)
+print("proxy is ", proxy)
 
 async def itsm_login() -> str:
     """Function to get API token. For security reason it won't return Token instead it will set internally."""
@@ -42,7 +56,8 @@ async def itsm_login() -> str:
         "Content-Type": "application/x-www-form-urlencoded"
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(proxy=proxy) as client:
+        print("Trying to login", os.getenv('SNOW_URL'))
         response = await client.post(
             f"{os.getenv('SNOW_URL')}/oauth_token.do",
             data=login_payload,
@@ -69,7 +84,7 @@ In the case the unique Identifier is short_description field."""
         "Content-Type": "application/x-www-form-urlencoded"
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(proxy=proxy) as client:
         response = await client.get(
             f"{os.getenv('SNOW_URL')}/api/now/table/incident",
             headers=headers,
@@ -86,17 +101,26 @@ async def create_record(unique_string: str, alert: Alert):
     # such that the search function `searchQuery`` can retrieve the record 
     # using the unique fingerprint field.
     data = {
-        "short_description": unique_string,
-        "description": alert.labels.description,
-        "work_notes": alert.labels.work_notes
+        "short_description": unique_string     
     }
+
+    # print("actual alert", alert, type(Alert))
+    for key, val in mandatory_fields.items():
+        if isinstance(val, str) and val.startswith("f'"):
+            try:
+                data[key] = eval(val, {"alert": alert})
+            except Exception as e:
+                print("Error evaluating", key, val,  str(e))
+                data[key] = "N/A"
+        else:
+            data[key] = val
 
     headers = {
         "Authorization": f"Bearer {TOKEN}",
         "Content-Type": "application/json"
     }
-
-    async with httpx.AsyncClient() as client:
+    # print("incident payload", data)
+    async with httpx.AsyncClient(proxy=proxy) as client:
         response = await client.post(
             f"{os.getenv('SNOW_URL')}/api/now/table/incident",
             json=data,
@@ -111,7 +135,7 @@ async def update_record(sys_id: str, alert: Alert):
     # Ensure the Update record does not modify the unique field, 
     # however, all other fields in the ITSM record are capable of being modified.
     data = {
-        "work_notes": alert.labels.work_notes
+        "work_notes": f'alert is still active {alert.labels.work_notes}'
     }
 
     headers = {
@@ -119,7 +143,7 @@ async def update_record(sys_id: str, alert: Alert):
         "Content-Type": "application/json"
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(proxy=proxy) as client:
         response = await client.put(
             f"{os.getenv('SNOW_URL')}/api/now/table/incident/{sys_id}",
             json=data,
@@ -135,7 +159,7 @@ async def close_record(sys_id: str, alert: Alert):
     Prometheus sets alert.status to resolved. this is a clear indication that the request or incident can be resolved.
     """
     data = {
-        "work_notes": alert.labels.work_notes,
+        "work_notes": f'alert is resolved {alert.labels.work_notes}',
         "state": 6,
         "close_notes": alert.labels.close_notes or "Closed with error resolved from prom",
         "close_code": alert.labels.close_code or "Resolved by request"
@@ -146,7 +170,7 @@ async def close_record(sys_id: str, alert: Alert):
         "Content-Type": "application/json"
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(proxy=proxy) as client:
         response = await client.put(
             f"{os.getenv('SNOW_URL')}/api/now/table/incident/{sys_id}",
             json=data,
@@ -192,7 +216,6 @@ async def process_alert(alert: Alert, unique_str: str):
         print("Error processing alert:", e)
 
 if __name__ == "__main__":
-    import os
     from dotenv import load_dotenv
     load_dotenv()
     import uvicorn

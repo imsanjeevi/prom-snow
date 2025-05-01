@@ -20,6 +20,14 @@ spec:
           envFrom:
             - secretRef:
                 name: prom-snow-secret
+          volumeMounts:
+            - name: mandatory-json
+              mountPath: /app/app/config
+              readOnly: true
+      volumes:
+        - name: mandatory-json
+          configMap:
+            name: snow-mandatory-fields
 ---
 apiVersion: v1
 kind: Service

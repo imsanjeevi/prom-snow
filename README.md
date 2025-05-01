@@ -35,3 +35,27 @@ oc create secret generic prom-snow-secret --from-env-file=.env
 
 oc apply -f deployment.yaml
 ```
+
+```json
+{
+    "description": "f'{alert.annotations.description}'",
+    "work_notes": "f'Alert fired at {alert.startsAt}. {alert.labels.work_notes}, check {alert.generatorURL}'",
+    "priority": "4-low",
+    "impact": "4-low",
+    "urgency": "4-low",
+    "state": "New",
+    "u_affected_user": "OpenshiftUser",
+    "assignment_group": "ORG-SP-Openshift",
+    "caller_id": "OpenshiftUser",
+    "category": "Failure",
+    "subcategory": "Monitoring",
+    "service_offering": "OpenShift Runtime",
+    "u_routing_group": "ORG-SP-Openshift",
+    "u_subject_area": "Openshift",
+    "u_open_type": "Openshift"
+}
+```
+
+```sh
+oc create configmap snow-mandatory-fields --from-file=mandatory.json
+```
