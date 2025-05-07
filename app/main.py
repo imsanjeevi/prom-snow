@@ -4,9 +4,7 @@ import json
 import httpx
 from typing import List, Dict, Any
 from pydantic import BaseModel
-from fastapi import FastAPI, Path, Body, Depends, HTTPException, status
-from dotenv import load_dotenv
-load_dotenv()
+from fastapi import FastAPI
 
 print("PWD", os.getcwd())
 # Load external mandatory fields
@@ -56,7 +54,7 @@ async def itsm_login() -> str:
         "Content-Type": "application/x-www-form-urlencoded"
     }
 
-    async with httpx.AsyncClient(proxy=proxy) as client:
+    async with httpx.AsyncClient(proxy=proxy, verify=False) as client:
         print("Trying to login", os.getenv('SNOW_URL'))
         response = await client.post(
             f"{os.getenv('SNOW_URL')}/oauth_token.do",
@@ -84,7 +82,7 @@ In the case the unique Identifier is short_description field."""
         "Content-Type": "application/x-www-form-urlencoded"
     }
 
-    async with httpx.AsyncClient(proxy=proxy) as client:
+    async with httpx.AsyncClient(proxy=proxy, verify=False) as client:
         response = await client.get(
             f"{os.getenv('SNOW_URL')}/api/now/table/incident",
             headers=headers,
@@ -120,7 +118,7 @@ async def create_record(unique_string: str, alert: Alert):
         "Content-Type": "application/json"
     }
     # print("incident payload", data)
-    async with httpx.AsyncClient(proxy=proxy) as client:
+    async with httpx.AsyncClient(proxy=proxy, verify=False) as client:
         response = await client.post(
             f"{os.getenv('SNOW_URL')}/api/now/table/incident",
             json=data,
@@ -143,7 +141,7 @@ async def update_record(sys_id: str, alert: Alert):
         "Content-Type": "application/json"
     }
 
-    async with httpx.AsyncClient(proxy=proxy) as client:
+    async with httpx.AsyncClient(proxy=proxy, verify=False) as client:
         response = await client.put(
             f"{os.getenv('SNOW_URL')}/api/now/table/incident/{sys_id}",
             json=data,
@@ -170,7 +168,7 @@ async def close_record(sys_id: str, alert: Alert):
         "Content-Type": "application/json"
     }
 
-    async with httpx.AsyncClient(proxy=proxy) as client:
+    async with httpx.AsyncClient(proxy=proxy, verify=False) as client:
         response = await client.put(
             f"{os.getenv('SNOW_URL')}/api/now/table/incident/{sys_id}",
             json=data,
