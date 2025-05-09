@@ -7,3 +7,4 @@ __pycache__
 Dockerfile
 Containerfile
 README.md
+app/config

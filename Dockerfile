@@ -9,6 +9,7 @@ RUN apk update && apk add --no-cache \
     ca-certificates \
     curl \
     vim \
+    jq \
     libffi-dev \
     gcc \
     musl-dev \

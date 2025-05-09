@@ -6,6 +6,40 @@ from typing import List, Dict, Any
 from pydantic import BaseModel
 from fastapi import FastAPI
 
+from fastapi.openapi.docs import (
+    get_redoc_html,
+    get_swagger_ui_html,
+    get_swagger_ui_oauth2_redirect_html,
+)
+from fastapi.staticfiles import StaticFiles
+
+app = FastAPI(docs_url=None, redoc_url=None)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - Swagger UI",
+        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+        swagger_js_url="/static/swagger-ui-bundle.js",
+        swagger_css_url="/static/swagger-ui.css",
+    )
+
+@app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
+async def swagger_ui_redirect():
+    return get_swagger_ui_oauth2_redirect_html()
+
+@app.get("/redoc", include_in_schema=False)
+async def redoc_html():
+    return get_redoc_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - ReDoc",
+        redoc_js_url="/static/redoc.standalone.js",
+    )
+
 print("PWD", os.getcwd())
 # Load external mandatory fields
 with open("app/config/mandatory.json", 'r') as f:
@@ -35,7 +69,6 @@ class AlertPayload(BaseModel):
 
 TOKEN = "" # will be replaced by itsm_login
 
-app = FastAPI()
 
 proxy = os.getenv("HTTP_PROXY", None)
 print("proxy is ", proxy)
@@ -158,7 +191,7 @@ async def close_record(sys_id: str, alert: Alert):
     """
     data = {
         "work_notes": f'alert is resolved {alert.labels.work_notes}',
-        "state": 6,
+        "state": os.getenv("SNOW_CLOSE_STATUS","6"),
         "close_notes": alert.labels.close_notes or "Closed with error resolved from prom",
         "close_code": alert.labels.close_code or "Resolved by request"
     }
@@ -217,4 +250,4 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
     load_dotenv()
     import uvicorn
-    uvicorn.run("app/main:app", host="0.0.0.0", port=8090, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8090, reload=True)

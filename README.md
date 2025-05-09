@@ -59,3 +59,40 @@ oc apply -f deployment.yaml
 ```sh
 oc create configmap snow-mandatory-fields --from-file=mandatory.json
 ```
+
+## Debug
+
+Export environment variables from a .env file
+```sh
+export $(grep -v '^#' .env | xargs)
+```
+
+CURL command to login
+```
+curl -X POST "$SNOW_URL/oauth_token.do" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=password" \
+  --data-urlencode "client_id=$SNOW_CLIENT_ID" \
+  --data-urlencode "client_secret=$SNOW_CLIENT_SECRET" \
+  --data-urlencode "username=$SNOW_USERNAME" \
+  --data-urlencode "password=$SNOW_PASSWORD" \
+  --insecure
+```
+Get access_token and set TOKEN
+```sh
+export TOKEN=""
+```
+
+UNIQUE_STRING will be alertname-namespace-fingerprint
+```sh
+export UNIQUE_STRING="Node4Alert-prom-snow-d0212c4c33b62441"
+```
+
+```sh
+curl -X GET "$SNOW_URL/api/now/table/incident" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "sysparm_limit=10" \
+  --data-urlencode "short_description=$UNIQUE_STRING" \
+  --insecure
+```
