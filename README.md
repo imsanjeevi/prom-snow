@@ -89,10 +89,8 @@ export UNIQUE_STRING="Node4Alert-prom-snow-d0212c4c33b62441"
 ```
 
 ```sh
-curl -X GET "$SNOW_URL/api/now/table/incident" \
+curl -X GET "$SNOW_URL/api/now/table/incident?sysparm_limit=10&sysparm_query=short_description=$UNIQUE_STRING" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  --data-urlencode "sysparm_limit=10" \
-  --data-urlencode "short_description=$UNIQUE_STRING" \
   --insecure
 ```
