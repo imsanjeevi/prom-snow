@@ -55,6 +55,12 @@ class AlertLabel(BaseModel):
     close_notes: str = ""
     close_code: str = ""
 
+class AlertAnnotation(BaseModel):
+    class Config:
+        extra = "allow"
+    runbook_url: str = ""
+    summary: str = ""
+    description: str = ""
 
 class Alert(BaseModel):
     class Config:
@@ -62,6 +68,7 @@ class Alert(BaseModel):
     status: str
     labels: AlertLabel
     fingerprint: str
+    annotations: AlertAnnotation
 
 
 class AlertPayload(BaseModel):
@@ -150,7 +157,7 @@ async def create_record(unique_string: str, alert: Alert):
         "Authorization": f"Bearer {TOKEN}",
         "Content-Type": "application/json"
     }
-    # print("incident payload", data)
+    print("incident payload", data)
     async with httpx.AsyncClient(proxy=proxy, verify=False) as client:
         response = await client.post(
             f"{os.getenv('SNOW_URL')}/api/now/table/incident",
@@ -200,7 +207,7 @@ async def close_record(sys_id: str, alert: Alert):
         "Authorization": f"Bearer {TOKEN}",
         "Content-Type": "application/json"
     }
-
+    print("incident close payload", data)
     async with httpx.AsyncClient(proxy=proxy, verify=False) as client:
         response = await client.put(
             f"{os.getenv('SNOW_URL')}/api/now/table/incident/{sys_id}",
