@@ -54,6 +54,7 @@ class AlertLabel(BaseModel):
     work_notes: str = ""
     close_notes: str = ""
     close_code: str = ""
+    severity: str = ""
 
 class AlertAnnotation(BaseModel):
     class Config:
@@ -142,6 +143,14 @@ async def create_record(unique_string: str, alert: Alert):
         "short_description": unique_string     
     }
 
+    if alert.labels.severity == "critical":
+        data["impact"] = "3"
+        data["urgency"] = "2"
+    else:
+        data["impact"] = "4"
+        data["urgency"] = "3"
+
+
     # print("actual alert", alert, type(Alert))
     for key, val in mandatory_fields.items():
         if isinstance(val, str) and val.startswith("f'"):
@@ -199,7 +208,7 @@ async def close_record(sys_id: str, alert: Alert):
     data = {
         "work_notes": f'alert is resolved {alert.labels.work_notes}',
         "state": os.getenv("SNOW_CLOSE_STATUS","6"),
-        "close_notes": alert.labels.close_notes or "Closed with error resolved from prom",
+        "close_notes": alert.labels.close_notes or os.getenv("SNOW_CLOSE_NOTES","Auto closing this incident, as alert is resolved on prometheus."),
         "close_code": alert.labels.close_code or "Resolved by request"
     }
 
